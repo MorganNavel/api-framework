@@ -1,3 +1,4 @@
+import "reflect-metadata";
 export function Autowired(getType?: () => any): PropertyDecorator {
   return (target, propertyKey) => {
     const type = getType
