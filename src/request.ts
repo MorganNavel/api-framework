@@ -1,6 +1,6 @@
 import { IncomingMessage } from 'http';
 import { parse } from 'url';
-import { RouterManager } from './router';
+import { urlencoded } from './utils/urlencoded';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -12,6 +12,7 @@ interface HttpRequestInit {
     body?: HttpBody;
     query?: Record<string, any>
 }
+type ContentType = "application/x-www-form-urlencoded" | "application/json" | "multipart/form-data" | "text/plain";
 export class HttpRequest {
     readonly url: string;
     readonly method: HttpMethod;
@@ -19,7 +20,7 @@ export class HttpRequest {
     params: HttpParams = {};
     readonly query?: Record<string, string>;
     readonly rawBody?:  string;
-    readonly body?: any;
+    body: any;
 
     constructor(ctx : HttpRequestInit){
         if(!ctx.method) throw 'Error: "method" parameter not declared';
@@ -30,14 +31,28 @@ export class HttpRequest {
         this.rawBody = ctx.body;
         this.query = ctx.query;
         
-
-        if(this.headers["content-type"]?.includes("application/json") && ctx.body){
-            try {
-                this.body = JSON.parse(ctx.body);
-            } catch {
-                this.body = undefined;
-            }
+        if(this.headers["content-type"] && ctx.body){
+            this._parseBody(this.headers, ctx.body)
         }
+    }
+
+    private _parseBody(headers: HttpHeaders, body: any){
+        const contentType = headers["content-type"] as ContentType;
+        console.log(contentType);
+        switch(contentType) {
+            case "application/json":
+                this.body = JSON.parse(body);
+                break;
+            case "application/x-www-form-urlencoded":
+                this.body = urlencoded(body);
+                break;
+            case "text/plain":
+                this.body = body.toString();
+                break;
+            default:
+                throw new Error("Not supported yet");
+        }
+
     }
     private _normalizeHeaders(headers?: HttpHeaders){
         const normalized: HttpHeaders = {};

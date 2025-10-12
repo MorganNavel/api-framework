@@ -26,6 +26,11 @@ export class UserController {
 
     @Post("/:id")
     createUser(req: HttpRequest, res: HttpResponse){
-        res.status(200);
+        const { name } = req.body;
+        
+        res.status(200).json({
+            id: 1,
+            name
+        });
     }
 }
