@@ -1,9 +1,27 @@
 
-export function sha256(input: string, toUpperCase = false) { return rstr2hex(rstr_sha256(str2rstr_utf8(input)), toUpperCase); }
+export function sha256(input: string, toUpperCase = false) { 
+    return rstr2hex(rstr_sha256(str2rstr_utf8(input)), toUpperCase); 
+}
 
 function rstr_sha256(input: string)
 {
   return binb2rstr(sha256_aux(rstr2binb(input), input.length * 8));
+}
+
+export function sha256_bytes(input: string): Uint8Array {
+  const bytes = str2rstr_utf8(input).split("").map(c => c.charCodeAt(0));
+  const words = rstr2binb(String.fromCharCode(...bytes));
+  const hashWords = sha256_aux(words, bytes.length * 8);
+
+  const output = new Uint8Array(32); // SHA-256 = 32 octets
+  for (let i = 0; i < 8; i++) {
+    output[i * 4] = (hashWords[i] >>> 24) & 0xff;
+    output[i * 4 + 1] = (hashWords[i] >>> 16) & 0xff;
+    output[i * 4 + 2] = (hashWords[i] >>> 8) & 0xff;
+    output[i * 4 + 3] = hashWords[i] & 0xff;
+  }
+
+  return output;
 }
 
 /*
