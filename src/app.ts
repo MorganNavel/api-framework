@@ -6,6 +6,7 @@ import http from "http";
 import { readdirSync, statSync } from "fs";
 import path from 'path';
 import { IocContainer } from "./ioc_container";
+import { Middleware } from "./middleware";
 
 export class App {
     private static _instance: App;
@@ -25,16 +26,32 @@ export class App {
             if(stat.isDirectory()){
                 this.loadControllers(fullPath);
             } else if(file.endsWith('.controller.ts') || file.endsWith('.controller.js')){
-                console.log(`Controller found : ${fullPath}`);
                 const controllerModule = require(fullPath);
                 Object.values(controllerModule).forEach((ControllerClass: any) => {
                     const controllerInstance = App._instance.ctx.resolve(ControllerClass)
                     RouterManager.getInstance().registerController(ControllerClass, controllerInstance);
                 });
             }
-
         }
+    }
+    private runMiddlewares(
+        req: HttpRequest,
+        res: HttpResponse,
+        middlewares: Middleware[],
+        finalHandler: () => void
+    ) {
+        let index = 0;
 
+        const next = () => {
+            const middleware = middlewares[index++];
+            if (middleware) {
+                middleware(req, res, next);
+            } else {
+                finalHandler();
+            }
+        };
+
+        next();
     }
     
 
@@ -45,13 +62,14 @@ export class App {
             const request : HttpRequest = await HttpRequestFactory.fromHttpNodeRequest(req);
             const response = new HttpResponse();
             try {
-                console.log(request);
-                console.log(RouterManager.getInstance());
                 const route = RouterManager.getInstance().findRoute(request.url, request.method);
                 if(!route)
                     return response.status(404).applyTo(res);
                 RouterManager.getInstance().extractParams(request, route?.pattern);
-                route.controller(request, response);
+                App._instance.runMiddlewares(request, response, route.middlewares ?? [], () => {
+                    route.controller(request, response);
+                });
+
                 return response.applyTo(res);
             } catch {
                 return response.status(501).applyTo(res);

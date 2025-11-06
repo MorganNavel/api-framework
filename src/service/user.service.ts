@@ -1,5 +1,5 @@
 import { Autowired } from "../decorator/autowired";
-import { UserRepository } from "./user.repository";
+import { UserRepository } from "../repository/user.repository";
 
 export class UserService {
     @Autowired()

@@ -2,7 +2,7 @@ import { Autowired } from "../decorator/autowired";
 import { Controller, Get, Post } from "../decorator/controller";
 import { HttpRequest } from "../request";
 import { HttpResponse } from "../response";
-import { UserService } from "./user.service";
+import { UserService } from "../service/user.service";
 
 @Controller("/user")
 export class UserController {

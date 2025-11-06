@@ -1,11 +1,14 @@
 import { RouteDefinition } from "./decorator/controller";
+import { Middleware } from "./middleware";
 import { HttpMethod, HttpRequest } from "./request";
 import { HttpResponse } from "./response";
 
 interface Route {
     method: HttpMethod;
     pattern: string;
-    controller: (req: HttpRequest, res: HttpResponse) => any
+    controller: (req: HttpRequest, res: HttpResponse) => any;
+    middlewares?: Middleware[];
+
 }
 export class RouterManager{
     private static _instance?: RouterManager;
@@ -30,14 +33,13 @@ export class RouterManager{
             this.routes.push({
                 method: route.method,
                 pattern: basePattern+ route.pattern,
-                controller: controllerInstance[route.handlerName].bind(controllerInstance)
+                controller: controllerInstance[route.handlerName].bind(controllerInstance),
+                middlewares: route.middlewares
             });
         }
     }
 
     findRoute(url: string, method: HttpMethod){
-        console.log("test routes");
-        console.log(this.routes);
         return this.routes.find(r => r.method === method && this.matchUrl(r.pattern, url));
     }
 

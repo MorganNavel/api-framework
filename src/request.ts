@@ -38,7 +38,6 @@ export class HttpRequest {
 
     private _parseBody(headers: HttpHeaders, body: any){
         const contentType = headers["content-type"] as ContentType;
-        console.log(contentType);
         switch(contentType) {
             case "application/json":
                 this.body = JSON.parse(body);
